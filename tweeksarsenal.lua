@@ -1,6 +1,6 @@
 loadstring(game:HttpGet("https://raw.githubusercontent.com/blackowl1231/Z3US/refs/heads/main/Games/other.lua"))()
 local z3USLoader = Instance.new("ScreenGui")
-z3USLoader.Name = "Z3US Loader"
+z3USLoader.Name = "Tweeks Script Loader"
 z3USLoader.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 z3USLoader.Parent = game:GetService("CoreGui")
 z3USLoader.ResetOnSpawn = false
@@ -88,7 +88,7 @@ textLabel2.BorderSizePixel = 0
 textLabel2.FontFace = Font.new("rbxasset://fonts/families/Nunito.json")
 textLabel2.Position = UDim2.fromScale(0.2, 0.0462)
 textLabel2.Size = UDim2.fromOffset(197, 58)
-textLabel2.Text = "Arsenal"
+textLabel2.Text = "Tweeks Arsenal Private"
 textLabel2.TextColor3 = Color3.fromRGB(255, 255, 255)
 textLabel2.TextSize = 62
 textLabel2.TextWrapped = true
@@ -149,7 +149,7 @@ textLabel5.BorderSizePixel = 0
 textLabel5.FontFace = Font.new("rbxasset://fonts/families/Nunito.json")
 textLabel5.Position = UDim2.fromScale(0.628, 0.821)
 textLabel5.Size = UDim2.fromOffset(200, 50)
-textLabel5.Text = "Thank you for using Z3US <3"
+textLabel5.Text = "Thank you for using Tweeks Scripts <3"
 textLabel5.TextColor3 = Color3.fromRGB(40, 58, 85)
 textLabel5.TextSize = 34
 textLabel5.Parent = frame
