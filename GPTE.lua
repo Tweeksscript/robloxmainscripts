@@ -1,0 +1,351 @@
+--// Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
+local UIS = UserInputService
+
+--// Settings
+local ESPObjects = {}
+local ESPEnabled = true
+local ShowDistance = true
+local TeamColors = true
+local AimlockEnabled = false
+local FlyEnabled = false
+local ESPKey = Enum.KeyCode.E -- Standardtastenzuweisung für ESP
+local FlyKey = Enum.KeyCode.F -- Standardtastenzuweisung für Fly
+local AimKey = Enum.UserInputType.MouseButton2
+local FlySpeed = 50
+local SmoothAimSpeed = 0.15
+local GUIVisible = true
+
+-- Fly Variables
+local FlyBV
+
+--// GUI erstellen
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "Modern_ESP_GUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Hauptframe
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 300, 0, 450)
+Frame.Position = UDim2.new(0, 20, 0, 20) -- Position im sichtbaren Bereich
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = true
+Frame.Parent = ScreenGui
+
+-- Runder Corner
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 15)
+UICorner.Parent = Frame
+
+-- Schatten
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Color = Color3.fromRGB(60, 60, 60)
+UIStroke.Thickness = 2
+UIStroke.Parent = Frame
+
+-- Titel
+local Title = Instance.new("TextLabel")
+Title.Text = "Tweeks Universal Cheat"
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Position = UDim2.new(0, 0, 0, 0)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 24
+Title.Parent = Frame
+
+--// Hover-Effekt
+local function HoverEffect(button)
+    button.MouseEnter:Connect(function()
+        button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    end)
+    button.MouseLeave:Connect(function()
+        button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    end)
+end
+
+--// Button mit On/Off-Indikator
+local function CreateToggleButton(text, posY, stateGetter, callback)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0, 220, 0, 40)
+    button.Position = UDim2.new(0, 20, 0, posY)
+    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Font = Enum.Font.Gotham
+    button.TextSize = 18
+    button.Text = text
+    button.Parent = Frame
+    HoverEffect(button)
+
+    local indicator = Instance.new("Frame")
+    indicator.Size = UDim2.new(0, 30, 0, 30)
+    indicator.Position = UDim2.new(0, 200, 0, posY + 5)
+    indicator.BackgroundColor3 = stateGetter() and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+    indicator.BorderSizePixel = 0
+    indicator.Parent = Frame
+
+    local indCorner = Instance.new("UICorner")
+    indCorner.CornerRadius = UDim.new(0, 12)
+    indCorner.Parent = indicator
+
+    button.MouseButton1Click:Connect(function()
+        callback()
+        indicator.BackgroundColor3 = stateGetter() and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+    end)
+
+    return posY + 50 -- neue Y-Position zurück
+end
+
+--// Slider erstellen
+local function CreateSlider(text, posY, min, max, default, callback)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 250, 0, 20)
+    label.Position = UDim2.new(0, 20, 0, posY)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 14
+    label.Text = string.format("%s: %.2f", text, default)
+    label.Parent = Frame
+
+    local slider = Instance.new("Frame")
+    slider.Size = UDim2.new(0, 250, 0, 12)
+    slider.Position = UDim2.new(0, 20, 0, posY + 20)
+    slider.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    slider.Parent = Frame
+
+    local sliderCorner = Instance.new("UICorner")
+    sliderCorner.CornerRadius = UDim.new(0, 6)
+    sliderCorner.Parent = slider
+
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new(default, 0, 1, 0)
+    fill.BackgroundColor3 = Color3.fromRGB(150, 150, 255)
+    fill.Parent = slider
+
+    local fillCorner = Instance.new("UICorner")
+    fillCorner.CornerRadius = UDim.new(0, 6)
+    fillCorner.Parent = fill
+
+    local dragging = false
+    slider.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
+    end)
+    slider.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local relative = math.clamp((Mouse.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X, 0, 1)
+            fill.Size = UDim2.new(relative, 0, 1, 0)
+            local value = min + (max - min) * relative
+            label.Text = string.format("%s: %.2f", text, value)
+            callback(value)
+        end
+    end)
+    return posY + 50
+end
+
+--// Buttons & Sliders modular platzieren
+local currentY = 40
+
+-- ESP / Aimlock Module
+currentY = CreateToggleButton("ESP", currentY, function() return ESPEnabled end, function() ESPEnabled = not ESPEnabled end)
+currentY = CreateToggleButton("Distance", currentY, function() return ShowDistance end, function() ShowDistance = not ShowDistance end)
+currentY = CreateToggleButton("Team Colors", currentY, function() return TeamColors end, function() TeamColors = not TeamColors end)
+currentY = CreateToggleButton("Aimlock", currentY, function() return AimlockEnabled end, function() AimlockEnabled = not AimlockEnabled end)
+currentY = CreateSlider("Smooth Aim", currentY, 0, 1, SmoothAimSpeed, function(value) SmoothAimSpeed = value end)
+
+-- Fly Module
+currentY = CreateToggleButton("Fly", currentY, function() return FlyEnabled end, function() FlyEnabled = not FlyEnabled end)
+currentY = CreateSlider("Fly Speed", currentY, 10, 200, FlySpeed, function(value) FlySpeed = value end)
+
+--// GUI Toggle-Funktion (ohne Animation)
+local function ToggleGUI()
+    GUIVisible = not GUIVisible
+    if GUIVisible then
+        -- Das GUI sichtbar machen
+        Frame.Position = UDim2.new(0, 20, 0, 20)
+    else
+        -- Das GUI ausblenden
+        Frame.Position = UDim2.new(0, -Frame.Size.X.Offset, 0, 20)
+    end
+end
+
+-- Rechts-Shift-Taste zum Umschalten des GUI
+UIS.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        ToggleGUI()
+    end
+end)
+
+--// ESP Funktionen
+local function CreateESP(player)
+    if player == LocalPlayer then return end
+    local box = Drawing.new("Square")
+    box.Filled = false
+    box.Thickness = 2
+    box.Color = Color3.fromRGB(255, 255, 255)
+    box.Transparency = 1
+    box.Visible = false
+    box.ZIndex = 2
+
+    local outline = Drawing.new("Square")
+    outline.Filled = false
+    outline.Thickness = 4
+    outline.Color = Color3.fromRGB(0, 0, 0)
+    outline.Transparency = 1
+    outline.Visible = false
+    outline.ZIndex = 1
+
+    local nameText = Drawing.new("Text")
+    nameText.Size = 14
+    nameText.Center = true
+    nameText.Outline = true
+    nameText.Color = Color3.fromRGB(255, 255, 255)
+    nameText.Transparency = 1
+    nameText.Visible = false
+    nameText.Font = 2
+    nameText.Text = player.Name
+    nameText.ZIndex = 3
+
+    ESPObjects[player] = {Box = box, Outline = outline, Name = nameText}
+end
+
+local function RemoveESP(player)
+    local esp = ESPObjects[player]
+    if esp then
+        esp.Box:Remove()
+        esp.Outline:Remove()
+        esp.Name:Remove()
+        ESPObjects[player] = nil
+    end
+end
+
+-- Funktion zur Ermittlung des nächsten Gegners, der auch sichtbar ist
+local function GetClosestEnemy()
+    local closest = nil
+    local shortestDistance = math.huge
+    for player, esp in pairs(ESPObjects) do
+        local char = player.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChild("Humanoid")
+        if hrp and hum and hum.Health > 0 and player.Team ~= LocalPlayer.Team then
+            local screenPos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+            if onScreen then
+                -- Sichtbarkeit prüfen, ob es keine Hindernisse gibt (Raycasting)
+                local ray = Ray.new(Camera.CFrame.Position, hrp.Position - Camera.CFrame.Position)
+                local hit, position = workspace:FindPartOnRay(ray, char)
+                if not hit then
+                    local dist = (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(screenPos.X, screenPos.Y)).Magnitude
+                    if dist < shortestDistance then
+                        closest = hrp
+                        shortestDistance = dist
+                    end
+                end
+            end
+        end
+    end
+    return closest
+end
+
+--// Main Loop
+RunService.RenderStepped:Connect(function(delta)
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local humanoid = char and char:FindFirstChild("Humanoid")
+    if not char or not hrp or not humanoid then return end
+
+    -- Fly
+    if FlyEnabled then
+        if not FlyBV then
+            FlyBV = Instance.new("BodyVelocity")
+            FlyBV.MaxForce = Vector3.new(400000, 400000, 400000)
+            FlyBV.Velocity = Vector3.new(0, 0, 0)
+            FlyBV.Parent = hrp
+        end
+
+        local moveDir = Vector3.new()
+        local camCF = Camera.CFrame
+        if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + camCF.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - camCF.LookVector end
+        if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - camCF.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + camCF.RightVector end
+        if UIS:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) end
+        if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then moveDir = moveDir - Vector3.new(0, 1, 0) end
+
+        FlyBV.Velocity = moveDir.Magnitude > 0 and moveDir.Unit * FlySpeed or Vector3.new(0, 0, 0)
+        humanoid.PlatformStand = true
+    else
+        if FlyBV then FlyBV:Destroy() FlyBV = nil end
+        if humanoid.PlatformStand then humanoid.PlatformStand = false end
+    end
+
+    -- ESP + Aimlock
+    for player, esp in pairs(ESPObjects) do
+        local pChar = player.Character
+        local pHrp = pChar and pChar:FindFirstChild("HumanoidRootPart")
+        local pHum = pChar and pChar:FindFirstChild("Humanoid")
+        if not ESPEnabled or not pHrp or not pHum or pHum.Health <= 0 then
+            esp.Box.Visible = false
+            esp.Outline.Visible = false
+            esp.Name.Visible = false
+        else
+            local pos, onScreen = Camera:WorldToViewportPoint(pHrp.Position)
+            if onScreen then
+                local distance = 0
+                if hrp then distance = (pHrp.Position - hrp.Position).Magnitude end
+                local scale = 1 / (pos.Z * math.tan(math.rad(Camera.FieldOfView * 0.5)) * 2) * 1000
+                local width = math.clamp(4.5 * scale, 20, 300)
+                local height = math.clamp(6 * scale, 35, 400)
+                local x = pos.X - width / 2
+                local y = pos.Y - height / 2
+                esp.Box.Size = Vector2.new(width, height)
+                esp.Outline.Size = Vector2.new(width, height)
+                esp.Box.Position = Vector2.new(x, y)
+                esp.Outline.Position = Vector2.new(x, y)
+                if TeamColors and player.Team ~= LocalPlayer.Team then
+                    esp.Box.Color = Color3.fromRGB(255, 0, 0)
+                elseif TeamColors and player.Team == LocalPlayer.Team then
+                    esp.Box.Color = Color3.fromRGB(0, 255, 0)
+                else
+                    esp.Box.Color = Color3.fromRGB(255, 255, 255)
+                end
+                esp.Name.Position = Vector2.new(pos.X, y - 14)
+                esp.Name.Size = math.clamp(12 * scale, 12, 22)
+                esp.Name.Text = player.Name
+                if ShowDistance then esp.Name.Text = string.format("%s [%.0f]", player.Name, distance) end
+                esp.Box.Visible = true
+                esp.Outline.Visible = true
+                esp.Name.Visible = true
+            else
+                esp.Box.Visible = false
+                esp.Outline.Visible = false
+                esp.Name.Visible = false
+            end
+        end
+    end
+
+    -- Smooth Aimlock
+    if AimlockEnabled and UIS:IsMouseButtonPressed(AimKey) then
+        local target = GetClosestEnemy()
+        if target then
+            local goal = CFrame.new(Camera.CFrame.Position, target.Position)
+            Camera.CFrame = Camera.CFrame:Lerp(goal, SmoothAimSpeed)
+        end
+    end
+end)
+
+--// Init ESP
+for _, player in ipairs(Players:GetPlayers()) do CreateESP(player) end
+Players.PlayerAdded:Connect(CreateESP)
+Players.PlayerRemoving:Connect(RemoveESP)
