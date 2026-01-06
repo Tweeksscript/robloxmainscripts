@@ -123,13 +123,13 @@ local y=50
 y=Toggle("ESP",y,function()return Settings.ESP end,function(v)Settings.ESP=v end)
 y=Toggle("Names",y,function()return Settings.ESPName end,function(v)Settings.ESPName=v end)
 y=Toggle("Distance",y,function()return Settings.Distance end,function(v)Settings.Distance=v end)
-y=Toggle("Team Colors",y,function()return Settings.TeamColors end,function(v)Settings.TeamColors=v end)
+y=Toggle("Team Check",y,function()return Settings.TeamColors end,function(v)Settings.TeamColors=v end)
 y=Toggle("Aimlock (RMB)",y,function()return Settings.Aimlock end,function(v)Settings.Aimlock=v end)
 y=Toggle("Wallcheck",y,function()return Settings.WallCheck end,function(v)Settings.WallCheck=v end)
+y=Toggle("Fly",y,function()return Settings.Fly end,function(v)Settings.Fly=v end)
 y=Toggle("FOV Circle",y,function()return Settings.FOV end,function(v)Settings.FOV=v end)
 y=Slider("FOV Radius",y,50,500,Settings.FOVRadius,function(v)Settings.FOVRadius=v end)
-y=Slider("Aim Smooth",y,0.05,1,Settings.SmoothAim,function(v)Settings.SmoothAim=v end)
-y=Toggle("Fly",y,function()return Settings.Fly end,function(v)Settings.Fly=v end)
+y=Slider("Aim Smoothness",y,0.05,1,Settings.SmoothAim,function(v)Settings.SmoothAim=v end)
 y=Slider("Fly Speed",y,20,200,Settings.FlySpeed,function(v)Settings.FlySpeed=v end)
 
 --// ================= ESP =================
