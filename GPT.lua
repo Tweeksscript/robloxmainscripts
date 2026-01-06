@@ -16,7 +16,7 @@ local Settings = {
     TeamColors = true,
 
     Aimlock = false,
-    SmoothAim = 0.15,
+    SmoothAim = 0.1,
 
     WallCheck = true,
     FOV = true,
@@ -121,7 +121,7 @@ end
 --// ================= BUILD UI =================
 local y=50
 y=Toggle("ESP",y,function()return Settings.ESP end,function(v)Settings.ESP=v end)
-y=Toggle("ESP Names",y,function()return Settings.ESPName end,function(v)Settings.ESPName=v end)
+y=Toggle("Names",y,function()return Settings.ESPName end,function(v)Settings.ESPName=v end)
 y=Toggle("Distance",y,function()return Settings.Distance end,function(v)Settings.Distance=v end)
 y=Toggle("Team Colors",y,function()return Settings.TeamColors end,function(v)Settings.TeamColors=v end)
 y=Toggle("Aimlock (RMB)",y,function()return Settings.Aimlock end,function(v)Settings.Aimlock=v end)
