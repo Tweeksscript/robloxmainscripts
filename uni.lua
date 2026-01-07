@@ -1,9 +1,13 @@
+-- Script By @tweeksonyt
 -- EDUCATIONAL PURPOSES (UI / math / camera techniques)
 
 --// Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local UIS = UserInputService
@@ -11,7 +15,7 @@ local UIS = UserInputService
 --// ================= SETTINGS =================
 local Settings = {
     ESP = true,
-    ESPName = true, -- neu: Name separat togglebar
+    ESPName = true,
     Distance = true,
     TeamColors = true,
 
@@ -26,12 +30,39 @@ local Settings = {
     FlySpeed = 60,
 }
 
+--// ================= CONFIG (EXECUTOR) =================
+local CONFIG_FILE = "tweeks_config.json"
+
+local function SaveSettings()
+    if not writefile then return end
+    local ok, data = pcall(function()
+        return HttpService:JSONEncode(Settings)
+    end)
+    if ok then
+        writefile(CONFIG_FILE, data)
+    end
+end
+
+local function LoadSettings()
+    if not (readfile and isfile and isfile(CONFIG_FILE)) then return end
+    local ok, decoded = pcall(function()
+        return HttpService:JSONDecode(readfile(CONFIG_FILE))
+    end)
+    if ok and typeof(decoded) == "table" then
+        for k,v in pairs(decoded) do
+            if Settings[k] ~= nil then
+                Settings[k] = v
+            end
+        end
+    end
+end
+
 --// ================= GUI =================
 local ScreenGui = Instance.new("ScreenGui", LocalPlayer.PlayerGui)
 ScreenGui.ResetOnSpawn = false
 
 local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.fromOffset(320, 560)
+Frame.Size = UDim2.fromOffset(320, 640)
 Frame.Position = UDim2.fromOffset(20, 20)
 Frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
 Frame.Active = true
@@ -45,6 +76,49 @@ Title.Text = "Tweeks Privat Script"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 22
 Title.TextColor3 = Color3.new(1,1,1)
+
+--// ================= SOUNDS =================
+local GuiToggleSound = Instance.new("Sound", ScreenGui)
+GuiToggleSound.SoundId = "rbxassetid://116271631941040"
+GuiToggleSound.Volume = 1
+
+local ModuleSound = Instance.new("Sound", ScreenGui)
+ModuleSound.SoundId = "rbxassetid://131268007007000"
+ModuleSound.Volume = 1.5
+
+--// ================= GUI FADE TOGGLE =================
+local GuiVisible = true
+local FadeTime = 0.35
+
+local function TweenDescendants(show)
+    for _,v in ipairs(Frame:GetDescendants()) do
+        if v:IsA("Frame") then
+            TweenService:Create(v, TweenInfo.new(FadeTime), {
+                BackgroundTransparency = show and 0 or 1
+            }):Play()
+        elseif v:IsA("TextLabel") or v:IsA("TextButton") then
+            TweenService:Create(v, TweenInfo.new(FadeTime), {
+                TextTransparency = show and 0 or 1,
+                BackgroundTransparency = v:IsA("TextButton") and (show and 0 or 1) or 1
+            }):Play()
+        end
+    end
+end
+
+local function ToggleGUI()
+    GuiVisible = not GuiVisible
+    GuiToggleSound:Play()
+
+    if GuiVisible then
+        Frame.Visible = true
+        TweenDescendants(true)
+    else
+        TweenDescendants(false)
+        task.delay(FadeTime, function()
+            if not GuiVisible then Frame.Visible = false end
+        end)
+    end
+end
 
 --// ================= UI HELPERS =================
 local function Toggle(text, y, get, set)
@@ -69,6 +143,8 @@ local function Toggle(text, y, get, set)
 
     b.MouseButton1Click:Connect(function()
         set(not get())
+        ModuleSound:Play()
+        SaveSettings()
         refresh()
     end)
     return y + 46
@@ -98,6 +174,7 @@ local function Slider(text,y,min,max,default,callback)
         fill.Size = UDim2.new((v-min)/(max-min),0,1,0)
         lbl.Text = string.format("%s: %.2f", text, v)
         callback(v)
+        SaveSettings()
     end
 
     setValue(default)
@@ -118,6 +195,24 @@ local function Slider(text,y,min,max,default,callback)
     return y+48
 end
 
+local function Button(text,y,callback)
+    local b = Instance.new("TextButton",Frame)
+    b.Size = UDim2.fromOffset(260,38)
+    b.Position = UDim2.fromOffset(20,y)
+    b.BackgroundColor3 = Color3.fromRGB(70,70,70)
+    b.Text = text
+    b.Font = Enum.Font.GothamBold
+    b.TextSize = 16
+    b.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner",b)
+
+    b.MouseButton1Click:Connect(function()
+        callback()
+        ModuleSound:Play()
+    end)
+    return y+46
+end
+
 --// ================= BUILD UI =================
 local y=50
 y=Toggle("ESP",y,function()return Settings.ESP end,function(v)Settings.ESP=v end)
@@ -131,6 +226,20 @@ y=Toggle("FOV Circle",y,function()return Settings.FOV end,function(v)Settings.FO
 y=Slider("FOV Radius",y,50,500,Settings.FOVRadius,function(v)Settings.FOVRadius=v end)
 y=Slider("Aim Smoothness",y,0.05,1,Settings.SmoothAim,function(v)Settings.SmoothAim=v end)
 y=Slider("Fly Speed",y,20,200,Settings.FlySpeed,function(v)Settings.FlySpeed=v end)
+
+y=Button("💾 Save Config",y,SaveSettings)
+y=Button("📂 Load Config",y,LoadSettings)
+
+--// ================= GUI TOGGLE KEY =================
+UIS.InputBegan:Connect(function(input,gp)
+    if gp then return end
+    if input.KeyCode==Enum.KeyCode.RightShift then
+        ToggleGUI()
+    end
+end)
+
+--// ================= AUTO LOAD =================
+LoadSettings()
 
 --// ================= ESP =================
 local ESP = {}
