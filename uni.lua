@@ -1,5 +1,4 @@
 -- Script By @tweeksonyt
--- EDUCATIONAL PURPOSES (UI / math / camera techniques)
 
 --// Services
 local Players = game:GetService("Players")
@@ -219,7 +218,7 @@ y=Toggle("ESP",y,function()return Settings.ESP end,function(v)Settings.ESP=v end
 y=Toggle("Names",y,function()return Settings.ESPName end,function(v)Settings.ESPName=v end)
 y=Toggle("Distance",y,function()return Settings.Distance end,function(v)Settings.Distance=v end)
 y=Toggle("Team Check",y,function()return Settings.TeamColors end,function(v)Settings.TeamColors=v end)
-y=Toggle("Aimlock (RMB)",y,function()return Settings.Aimlock end,function(v)Settings.Aimlock=v end)
+y=Toggle("Aimbot (RMB)",y,function()return Settings.Aimlock end,function(v)Settings.Aimlock=v end)
 y=Toggle("Wallcheck",y,function()return Settings.WallCheck end,function(v)Settings.WallCheck=v end)
 y=Toggle("Fly",y,function()return Settings.Fly end,function(v)Settings.Fly=v end)
 y=Toggle("FOV Circle",y,function()return Settings.FOV end,function(v)Settings.FOV=v end)
