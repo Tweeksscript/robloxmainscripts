@@ -19,7 +19,7 @@ local Settings = {
     TeamColors = true,
 
     Aimlock = false,
-    SmoothAim = 0.1,
+    SmoothAim = 0.100,
 
     WallCheck = true,
     FOV = true,
