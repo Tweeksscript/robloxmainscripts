@@ -14,14 +14,14 @@ local UIS = UserInputService
 --// ================= SETTINGS =================
 local Settings = {
     ESP = false,
-    ESPName = true,
-    Distance = true,
-    TeamColors = true,
+    ESPName = false,
+    Distance = false,
+    TeamColors = false,
 
     Aimlock = false,
-    SmoothAim = 0.100,
+    SmoothAim = 100,
 
-    WallCheck = true,
+    WallCheck = false,
     FOV = false,
     FOVRadius = 150,
 
