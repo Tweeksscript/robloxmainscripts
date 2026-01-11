@@ -27,6 +27,12 @@ local Settings = {
 
     Fly = false,
     FlySpeed = 100,
+
+    Spinbot = false,
+    SpinSpeed = 12,
+
+    Speed = false,
+    WalkSpeed = 24,
 }
 
 --// ================= CONFIG (EXECUTOR) =================
@@ -61,7 +67,7 @@ local ScreenGui = Instance.new("ScreenGui", LocalPlayer.PlayerGui)
 ScreenGui.ResetOnSpawn = false
 
 local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.fromOffset(320, 640)
+Frame.Size = UDim2.fromOffset(320, 770)
 Frame.Position = UDim2.fromOffset(20, 20)
 Frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
 Frame.Active = true
@@ -71,7 +77,7 @@ Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,16)
 local Title = Instance.new("TextLabel", Frame)
 Title.Size = UDim2.new(1,0,0,40)
 Title.BackgroundTransparency = 1
-Title.Text = "Tweeks Privat Script"
+Title.Text = "Tweeks Universal Private"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 22
 Title.TextColor3 = Color3.new(1,1,1)
@@ -214,20 +220,21 @@ end
 
 --// ================= BUILD UI =================
 local y=50
+y=Toggle("Spinbot",y,function()return Settings.Spinbot end,function(v)Settings.Spinbot=v end)
+y=Slider("Spin Speed",y,1,30,Settings.SpinSpeed,function(v)Settings.SpinSpeed=v end)
 y=Toggle("ESP",y,function()return Settings.ESP end,function(v)Settings.ESP=v end)
 y=Toggle("Names",y,function()return Settings.ESPName end,function(v)Settings.ESPName=v end)
 y=Toggle("Distance",y,function()return Settings.Distance end,function(v)Settings.Distance=v end)
 y=Toggle("Team Check",y,function()return Settings.TeamColors end,function(v)Settings.TeamColors=v end)
-y=Toggle("Aimbot (RMB)",y,function()return Settings.Aimlock end,function(v)Settings.Aimlock=v end)
 y=Toggle("Wallcheck",y,function()return Settings.WallCheck end,function(v)Settings.WallCheck=v end)
-y=Toggle("Fly",y,function()return Settings.Fly end,function(v)Settings.Fly=v end)
-y=Toggle("FOV Circle",y,function()return Settings.FOV end,function(v)Settings.FOV=v end)
-y=Slider("FOV Radius",y,50,500,Settings.FOVRadius,function(v)Settings.FOVRadius=v end)
+y=Toggle("Aimbot (RMB)",y,function()return Settings.Aimlock end,function(v)Settings.Aimlock=v end)
 y=Slider("Aim Smoothness",y,0.05,1,Settings.SmoothAim,function(v)Settings.SmoothAim=v end)
+y=Toggle("Speed",y,function()return Settings.Speed end,function(v)Settings.Speed=v end)
+y=Slider("Speed Adjustment",y,16,100,Settings.WalkSpeed,function(v)Settings.WalkSpeed=v end)
+y=Toggle("Fly",y,function()return Settings.Fly end,function(v)Settings.Fly=v end)
 y=Slider("Fly Speed",y,20,200,Settings.FlySpeed,function(v)Settings.FlySpeed=v end)
-
-y=Button("💾 Save Config",y,SaveSettings)
-y=Button("📂 Load Config",y,LoadSettings)
+y=Toggle("FOV Circle",y,function()return Settings.FOV end,function(v)Settings.FOV=v end)
+y=Slider("Circle Radius",y,50,500,Settings.FOVRadius,function(v)Settings.FOVRadius=v end)
 
 --// ================= GUI TOGGLE KEY =================
 UIS.InputBegan:Connect(function(input,gp)
@@ -313,6 +320,8 @@ end
 
 --// ================= MAIN LOOP =================
 local BV
+local spinAngle = 0
+local defaultSpeed = 16
 RunService.RenderStepped:Connect(function()
     local char = LocalPlayer.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -380,6 +389,12 @@ RunService.RenderStepped:Connect(function()
         currentTarget = nil
     end
 
+        if Settings.Speed and not Settings.Fly then
+        hum.WalkSpeed = Settings.WalkSpeed
+    else
+        hum.WalkSpeed = defaultSpeed
+    end
+
     -- Fly
     if Settings.Fly then
         if not BV then
@@ -399,5 +414,12 @@ RunService.RenderStepped:Connect(function()
     else
         if BV then BV:Destroy() BV=nil end
         hum.PlatformStand=false
+    end
+
+        if Settings.Spinbot then
+        spinAngle += Settings.SpinSpeed
+        hrp.CFrame =
+            CFrame.new(hrp.Position) *
+            CFrame.Angles(0, math.rad(spinAngle), 0)
     end
 end)
