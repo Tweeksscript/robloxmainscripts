@@ -13,7 +13,7 @@ local UIS = UserInputService
 
 --// ================= SETTINGS =================
 local Settings = {
-    ESP = true,
+    ESP = false,
     ESPName = true,
     Distance = true,
     TeamColors = true,
@@ -26,7 +26,7 @@ local Settings = {
     FOVRadius = 150,
 
     Fly = false,
-    FlySpeed = 60,
+    FlySpeed = 100,
 }
 
 --// ================= CONFIG (EXECUTOR) =================
