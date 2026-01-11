@@ -22,7 +22,7 @@ local Settings = {
     SmoothAim = 0.100,
 
     WallCheck = true,
-    FOV = true,
+    FOV = false,
     FOVRadius = 150,
 
     Fly = false,
